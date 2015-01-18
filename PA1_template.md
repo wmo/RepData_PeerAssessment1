@@ -42,23 +42,56 @@ The last command above should open the generated html file `PA1_template.html` i
 
 Load the data into a dataframe named 'act', name the columns.
 
-```{r}
+
+```r
 act<-read.table( "activity.csv", sep=",", as.is=T, header=T,na.strings="NA")
 names(act)<- c("steps","date","interval")
 ```
 
 The dimensions of the dataframe:
 
-```{r}
+
+```r
 dim(act)
+```
+
+```
+## [1] 17568     3
 ```
 
 
 Sample data: 
 
-```{r results="asis"}
+
+```r
 kable(act[16777:16797,], row.names=F)
 ```
+
+
+
+| steps|date       | interval|
+|-----:|:----------|--------:|
+|   280|2012-11-28 |      600|
+|   731|2012-11-28 |      605|
+|   733|2012-11-28 |      610|
+|   721|2012-11-28 |      615|
+|   713|2012-11-28 |      620|
+|   731|2012-11-28 |      625|
+|   721|2012-11-28 |      630|
+|   358|2012-11-28 |      635|
+|   574|2012-11-28 |      640|
+|   569|2012-11-28 |      645|
+|    20|2012-11-28 |      650|
+|    28|2012-11-28 |      655|
+|     0|2012-11-28 |      700|
+|    69|2012-11-28 |      705|
+|    53|2012-11-28 |      710|
+|    60|2012-11-28 |      715|
+|    17|2012-11-28 |      720|
+|    59|2012-11-28 |      725|
+|    45|2012-11-28 |      730|
+|   123|2012-11-28 |      735|
+|     0|2012-11-28 |      740|
 
 
 
@@ -71,25 +104,30 @@ kable(act[16777:16797,], row.names=F)
 *Solution*: do the aggregation of steps per day, which we store in the dataframe 'sum_by_day'. The default behaviour of the `aggregate()` function is to ignore NA's. 
 
 Preparation:
-```{r}
+
+```r
 sum_by_day  <- aggregate( act[,"steps"] ,by=list(day=act[,"date"]),sum)
 ```
 
 Calculate the mean and median: 
-```{r}
+
+```r
 day_mean    <- mean(sum_by_day$x,na.rm=T)
 day_median  <- median(sum_by_day$x,na.rm=T)
 ```
 
 Create the plot: 
 
-```{r fig.width=5,fig.height=4}
+
+```r
 hist(sum_by_day$x, col='steel blue', 
      xlab="Number of Steps", 
      main="Histogram of Steps per Day")
 ```
 
-The number of daily taken steps has a **mean** of **`r sprintf("%.0f",day_mean)`** and a **median** of **`r sprintf("%.0f",day_median)`**.
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+
+The number of daily taken steps has a **mean** of **10766** and a **median** of **10765**.
 
 
 
@@ -100,7 +138,8 @@ The number of daily taken steps has a **mean** of **`r sprintf("%.0f",day_mean)`
 *Solution*: for the `plot()` function to work correctly, we explicitly need to filter out the NA records. To that purpose we build a vector `valid_steps` containing a reference to the valid records (ie. the ones that do not have NA for *steps*), and then do the aggregation of steps per interval, which we store in the dataframe `mean_by_interval`.
 
 
-```{r fig.width=8,fig.height=4}
+
+```r
 valid_steps <- which(!is.na(act$steps))
 
 mean_by_interval = aggregate( act[valid_steps,"steps"] ,by=list(interval=act[valid_steps,"interval"]),mean)
@@ -110,15 +149,18 @@ plot( mean_by_interval$interval, mean_by_interval$x,
       xlab="Interval", ylab="Average Steps", main="Average Number of Steps Taken")
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
+
 
 Calculate the maximum:
-```{r}
+
+```r
 # interval with maximum steps
 max_steps          <- max(mean_by_interval$x)
 max_steps_interval <- mean_by_interval[mean_by_interval$x==max_steps,"interval"]
 ```
 
-The maximum number of steps, `r round(max_steps,0)`, was taken in **interval `r max_steps_interval`**.
+The maximum number of steps, 206, was taken in **interval 835**.
 
 
 
@@ -132,11 +174,12 @@ The maximum number of steps, `r round(max_steps,0)`, was taken in **interval `r 
 
 To identify the valid records we re-use the vector `valid_steps`, see above, and compare its length to the number of rows in the `act` dataframe.
 
-```{r}
+
+```r
 num_invalid <- nrow(act)-length(valid_steps)
 pct_invalid <- round(100*num_invalid/nrow(act),0)
 ```
-The **number of rows with missing values** totals **`r num_invalid`** or `r pct_invalid`% of the rows. 
+The **number of rows with missing values** totals **2304** or 13% of the rows. 
 
 #### Strategy to fill in the missing values 
 
@@ -149,7 +192,8 @@ The choosen strategy for filling the missing values:
 
 The new dataset with the missing data filled in is called `act_fill`, and is created as follows:
 
-```{r}
+
+```r
 # Make a copy of the original dataframe
 act_fill<-act
 
@@ -169,7 +213,8 @@ for (i in 1:nrow(interval_mean)) {
 
 Plot the histogram: 
 
-```{r fig.width=5,fig.height=4}
+
+```r
 # aggregate the steps per day
 sum_by_day  <- aggregate( act_fill[,"steps"] ,by=list(day=act_fill[,"date"]),sum)
 
@@ -177,8 +222,11 @@ hist(sum_by_day$x, col='steel blue',
     xlab="Number of Steps", main="Histogram of Steps per Day")
 ```
 
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+
 Calculate the mean and median: 
-```{r}
+
+```r
 # absolute difference
 day_mean_fill   <- mean(sum_by_day$x,na.rm=T)
 day_median_fill <- median(sum_by_day$x,na.rm=T)
@@ -188,9 +236,9 @@ pct_diff_mean   <- 100*(day_mean-day_mean_fill)/day_mean
 pct_diff_median <- 100*(day_median-day_median_fill)/day_median
 ```
 
-The number of daily taken steps has a **mean** of **`r sprintf("%.02f",day_mean_fill)`** and a **median** of **`r sprintf("%.0f",day_median_fill)`**.
+The number of daily taken steps has a **mean** of **10765.64** and a **median** of **10762**.
 
-The difference of the meand and median statistics of `act` and `act_fill` is only `r sprintf("%.02f",pct_diff_mean)`% and `r sprintf("%.0f",pct_diff_median)`% respectively. 
+The difference of the meand and median statistics of `act` and `act_fill` is only 0.01% and 0% respectively. 
 
 Conclusion regarding difference with first part: 
 
@@ -206,7 +254,8 @@ Conclusion regarding difference with first part:
 
 In `act_fill` create a new column `day_type` of type factor, and assign it a weekday or weekend depending on the date.
 
-```{r}
+
+```r
 # assign 'weekday' to all day types
 act_fill[,"day_type"]="weekday"
 
@@ -222,7 +271,8 @@ tbp = aggregate( act_fill[,"steps"] ,by=list(interval=act_fill[,"interval"], day
 
 Plot 
 
-```{r fig.width=7}
+
+```r
 par( mfrow=c(2,1) )
 par( mar=c(1.1,4.1,1.1,4.1))
 par( oma=c(4.1,0,4.1,0))
@@ -245,6 +295,8 @@ abline(h=0,v=600)
 abline(h=0,v=1200)
 abline(h=0,v=1800)
 ```
+
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png) 
 
 The vertical lines indicate the times: 6h00, 12h00 and 18h00, to make it easier to pinpoint morning/afternoon/evening on the chart.
 
